@@ -1,0 +1,157 @@
+---
+title: "STAT-581A4 HW4"
+author: "Sam Armstrong"
+date: "11/4/2019"
+output: pdf_document
+---
+```{r}
+library(xlsx)
+library(devtools,warn.conflicts=FALSE,quietly=TRUE)
+library(ggplot2)
+library(ggbiplot,warn.conflicts=FALSE,quietly=TRUE)
+```
+
+```{r}
+flee_beetle_data <- read.xlsx(file="/s/chopin/k/grad/sarmst/stat581A4/fleabeetledata.xlsx", 1,  startRow = 3)
+mali_farm_data <- read.xlsx(file="/s/chopin/k/grad/sarmst/stat581A4/malifarmdata.xlsx", 1,  startRow = 2)
+HO = cbind(flee_beetle_data[1:19, 1:5], matrix(rep(1,each=19),nrow=19))
+HC = cbind(cbind(flee_beetle_data[1:20, 1], flee_beetle_data[, 6:9]), matrix(rep(2,each=20),nrow=20))
+colnames(HO)<-c('Experiment', 'x1', 'x2', 'x3', 'x4', 'Species')
+colnames(HC)<-c('Experiment', 'x1', 'x2', 'x3', 'x4', 'Species')
+flee_beetle_data = rbind(HO, HC);
+head(flee_beetle_data)
+```
+
+1.1.a)
+```{r}
+cov(mali_farm_data)
+cor(mali_farm_data)
+```
+1.1.b)
+The correlation matrix should be used here because some of the columns in the Mali Farm data seem to be scaled differently and therefore should be standardized.
+
+1.1.c)
+```{r}
+eigen(cor(mali_farm_data))$values
+round(eigen(cor(mali_farm_data))$values/sum(eigen(cor(mali_farm_data))$values), 2)
+```
+There are 9 eigenvalues and the first four make up ~82% of the variance each with 10+% the last 5 make up the remaining ~18% of the variance each with 7-%. The largest eigenvalue is for the data in the column Family and is much larger than the rest of the data making up almost half of variance.
+
+1.1.d)
+```{r}
+cumsum(eigen(cor(mali_farm_data))$values/sum(eigen(cor(mali_farm_data))$values))
+```
+The criteria I used for picking how many PCs to use was the cumulative eigenvalue percentage of the variance being higher than 80%. This causes the PCs to be reduced to four dimensions Family (46% cumulative), DistRd (60% cumulative), Cotton (72% cumulative), and Maize (82% cumulative).
+
+1.1.e)
+```{r}
+eigen(var(mali_farm_data))$vectors[,1:4]
+```
+
+1.1.f)
+```{r}
+meanVec<-apply(mali_farm_data,2,mean)
+transMF<-t(t(mali_farm_data)-meanVec)
+pcaMaliFarm<-t(t(eigen(var(mali_farm_data))$vectors[,1:4])%*%t(transMF))
+plot(pcaMaliFarm)
+pairs(pcaMaliFarm)
+```
+
+In the above graphs the correlation of the transformed variables appears to be close to zero.
+
+```{r}
+boxplot(mali_farm_data[,1:4])
+```
+
+The variances of the untransformed data above seem to be scaled differently suggesting the variables should be standardized.
+
+```{r}
+plot(eigen(cor(mali_farm_data))$values,type='b')
+```
+
+The elbow of the graph above suggests retaining only PC1 and PC2. Most of the variation is explained by PC1.
+
+
+
+```{r}
+mali_farm.pc=princomp(mali_farm_data,cor=TRUE)
+ggbiplot(mali_farm.pc)
+```
+
+The plot above shows there are a few outliers in the PC1 and PC2 data. Also it looks like an increase an PC1 results in an increase of the other PCs.
+
+1.1.g) Using the correlation matrix seems to indicate that first four PCs should be used, but using the covariance matrix indicates that only the first two PCs should be used. The data does seem to be scaled differently so using the first four PCs makes sense and explains a lot of the variance (82%). However if you want to be able to visualize the data then using only the first two PCs is ideal and still explains a lot of the variance (60%).
+
+1.2.a)
+```{r}
+cov(flee_beetle_data[, 2:5])
+cor(flee_beetle_data[, 2:5])
+```
+
+1.2.b)
+The covariance matrix should be used here because each columns data seems to be scaled the same and therefore doesn't need to be standardized.
+
+1.2.c)
+```{r}
+eigen(cov(flee_beetle_data[, 2:5]))$values
+round(eigen(cov(flee_beetle_data[, 2:5]))$values/sum(eigen(cov(flee_beetle_data[, 2:5]))$values), 2)
+```
+There are 4 eigenvalues and the first two make up ~84% of the variance each with 19+% the last 2 make up the remaining ~16% of the variance each with 12-%. The largest eigenvalue is for the data in the column x1 and is much larger than the rest of the data making up more than half of the variance.
+
+1.2.d)
+```{r}
+cumsum(eigen(cov(flee_beetle_data[, 2:5]))$values/sum(eigen(cov(flee_beetle_data[, 2:5]))$values))
+```
+The criteria I used for picking how many PCs to use was the cumulative eigenvalue percentage of the variance being higher than 80%. This causes the PCs to be reduced to two dimensions x1 (65% cumulative) and x2 (84% cumulative).
+
+1.2.e)
+```{r}
+eigen(cov(flee_beetle_data[, 2:5]))$vectors[,1:2]
+```
+
+1.2.f)
+```{r}
+meanVec<-apply(flee_beetle_data[, 2:5],2,mean)
+transFB<-t(t(flee_beetle_data[, 2:5])-meanVec)
+pcaFleeBeetle<-t(t(eigen(var(flee_beetle_data[, 2:5]))$vectors)%*%t(transFB))
+plot(pcaFleeBeetle[,1:2])
+plot(pcaFleeBeetle[,1:2],pch=flee_beetle_data[,"Species"],col=flee_beetle_data[,"Species"])
+pairs(pcaFleeBeetle)
+```
+
+In the above graphs the correlation of the transformed variables appears to be close to zero. It does appear that the Haltica Oleracea beetles are more in the lower halves of PC1 and PC2 and that the Haltica Carduorum are more in the upper halves of PC1 and PC2, which may indicate a negative correlation between PC1 and PC2 when using individual beetle species.
+
+
+```{r}
+boxplot(flee_beetle_data[, 2:5])
+```
+
+The variances of the untransformed data above seem to be scaled similarly suggesting the variables don't need to be standardized.
+
+```{r}
+plot(eigen(cov(flee_beetle_data[, 2:5]))$values,type='b')
+```
+
+The elbow of the graph above suggests retaining only PC1 and PC2. Most of the variation is explained by PC1.
+
+```{r}
+flee_beetle.pc=princomp(flee_beetle_data[, 2:5],cor=FALSE)
+ggbiplot(flee_beetle.pc)
+```
+
+The plot above shows that the data spread out pretty evenly in the PC1 and PC2 data. Also it looks like an increase an PC1 results in an increase of the other PCs
+
+1.2.g) Using the covariance matrix seems to indicate that first two PCs should be used, and using the correlation matrix indicates that the same two PCs should be used. The data does seem to be scaled similarly so using either the covariance or correlation matrix seems acceptable and switching from covariance to correlation doesn't change the results too much confirming that either is acceptable.
+
+
+2)
+```{r}
+A <- matrix(c(25, 50, 5, 50, 100, 10, 5, 10, 145), 3, 3, byrow=TRUE);A
+eigen <- eigen(A);
+eigen_vectors = round(eigen$vectors, 6);eigen_vectors
+eigen_values = round(eigen$values, 6);eigen_values
+A1 = round(eigen_values[1]*eigen_vectors[,1]%*%t(eigen_vectors[,1]));A1
+A2 = round(eigen_values[2]*eigen_vectors[,2]%*%t(eigen_vectors[,2]));A2
+A3 = eigen_values[3]*eigen_vectors[,3]%*%t(eigen_vectors[,3]);A3
+A1+A2+A3
+```

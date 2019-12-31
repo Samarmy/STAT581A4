@@ -1,0 +1,121 @@
+---
+title: "STAT-581A4 Homework 5"
+author: "Sam Armstrong"
+date: "11/13/2019"
+output: pdf_document
+---
+```{r}
+library(xlsx)
+library(devtools,warn.conflicts=FALSE,quietly=TRUE)
+library(psych,warn.conflicts=FALSE,quietly=TRUE)
+```
+
+```{r}
+flee_beetle_data <- read.xlsx(file="/s/chopin/k/grad/sarmst/stat581A4/fleabeetledata.xlsx", 1,  startRow = 3)
+HO = cbind(flee_beetle_data[1:19, 1:5], matrix(rep(1,each=19),nrow=19))
+HC = cbind(cbind(flee_beetle_data[1:20, 1], flee_beetle_data[, 6:9]), matrix(rep(2,each=20),nrow=20))
+colnames(HO)<-c('Experiment', 'x1', 'x2', 'x3', 'x4', 'Species')
+colnames(HC)<-c('Experiment', 'x1', 'x2', 'x3', 'x4', 'Species')
+flee_beetle_data = rbind(HO, HC);
+head(flee_beetle_data)
+```
+
+```{r}
+engineer_data <- read.xlsx(file="/s/chopin/k/grad/sarmst/stat581A4/engineers_pilots.xls", 1,  startRow = 2)
+engineer = cbind(engineer_data[, 1:6], matrix(rep(1,each=20),nrow=20))
+pilot = cbind(engineer_data[, 7:12], matrix(rep(2,each=20),nrow=20))
+colnames(engineer)<-c('X1', 'X2', 'X3', 'X4', 'X5', 'X6', 'Job')
+colnames(pilot)<-c('X1', 'X2', 'X3', 'X4', 'X5', 'X6', 'Job')
+engineer_data = rbind(engineer, pilot);
+head(engineer_data)
+```
+
+# Full Beetle Data
+```{r}
+cor(flee_beetle_data[, 2:5])
+```
+The correlation between x2 and x3 seems to be the strongest at 0.72. The next two most correlated are x2 with x4 at 0.59 and x3 with x4 at 0.58. The rest of the correlations have an absolute value of less than 0.2
+
+```{r}
+out1beetle<-principal(as.matrix(flee_beetle_data[, 2:5]),nfactors=2,rotate="none")
+out2beetle<-principal(as.matrix(flee_beetle_data[, 2:5]),nfactors=2,rotate="varimax")
+out1beetle$loadings
+out2beetle$loadings
+# factanal(as.matrix(flee_beetle_data[, 2:5]),2,rotation="none")
+```
+The results from the factor analysis without rotation and with rotation are very similar. The loadings only change by one one hundreth or less. Every other output from the factor analysis is the same otherwise suggesting the rotation was very slight.
+
+I choose a factor of 2 for this model because when I run factanal of 1 factor I get a p-value less than but close to 0.05 and when I run it with 2 factors I get an error '2 factors are too many for 4 variables' but based on the p-value of the single factor is seems like 2 factors should be higher than 0.05. Also when looking at the first factor which is mostly x2, x3, and x4 and then the second factor which is mostly x1 which covers all the variables. Finally the fit and r squared are fairly high and adding a third factor doesn't increase them by much.
+
+The proportion of variance of the first factor is more than half and the second one is more than a quarter and together they account for more than 80% of the variance suggesting that only 2 factors should be used.
+
+
+# Full Engineer/Pilot Data
+```{r}
+cor(engineer_data[, 1:6])
+```
+The correlation between highest absolute correlations are X1 to X2 (0.38) and X4 to X6 (0.32). Then there are three with a correlation between 0.29 and 0.20 (X2 to X4, X3 to X4, and X2 to X5). The rest are below 0.19.
+
+```{r}
+out1engpil<-principal(as.matrix(engineer_data[, 1:6]),nfactors=4,rotate="none")
+out2engpil<-principal(as.matrix(engineer_data[, 1:6]),nfactors=4,rotate="varimax")
+out1engpil$loadings
+out2engpil$loadings
+# factanal(as.matrix(engineer_data[, 1:6]),1,rotation="varimax")
+```
+The results from the factor analysis without rotation compared to the one with rotation shows a large shift of all the loadings. Before the rotation the loadings seems to be more evenly distributed while afterwards they seem more spread out, this is likely the result of the rotation maximizing the squared variance. After the rotation there are now 1-2 variables in each factor with 0%
+
+I choose a factor of 4 for this model because when I run factanal with 1 factor I get a p-value greater than 0.05 suggesting 1 or more are enough factors. Also when looking at the rotated model the first factor which is mostly X1 and X6, then the second factor which is mostly X2 and X4, then the third factor which is mostly x5, and finally the fourth factor which is mostly X3 which covers all the variables. Finally the fit and r squared are fairly high and adding a fifth factor doesn't increase them by much.
+
+The proportion of variance of the first and second factor are each almost a quarter and the third and fourth are almost 20% and together they account for more than 80% of the variance suggesting that only 4 factors should be used.
+
+# The Haltica Oleracea Data and Haltica Carduorum Data
+```{r}
+cor(flee_beetle_data[1:19, 2:5])
+cor(flee_beetle_data[20:39, 2:5])
+```
+In the Haltica Oleracea Data the correlation between x1 and x2 seems to be the strongest at 0.69. The next two most correlated are x1 with x4 at 0.53 and x2 with x3 at 0.50. The rest of the correlations have an absolute value of less than 0.5 and greater than 0.12. In the Haltica Carduorum Data the correlation between x1 with x2 and x2 and x3 seems to be the strongest both at about 0.64. The rest of the correlations have an absolute value of less than 0.39 and greater than 0.24.
+The correlation matrices seem to be distributed similarly.
+
+```{r}
+out1HO<-principal(as.matrix(flee_beetle_data[1:19, 2:5]),nfactors=2,rotate="none")
+out2HO<-principal(as.matrix(flee_beetle_data[1:19, 2:5]),nfactors=2,rotate="varimax")
+out1HC<-principal(as.matrix(flee_beetle_data[20:39, 2:5]),nfactors=2,rotate="none")
+out2HC<-principal(as.matrix(flee_beetle_data[20:39, 2:5]),nfactors=2,rotate="varimax")
+out1HO$loadings
+out2HO$loadings
+out1HC$loadings
+out2HC$loadings
+# factanal(as.matrix(flee_beetle_data[1:19, 2:5]),1,rotation="varimax")
+# factanal(as.matrix(flee_beetle_data[20:39, 2:5]),1,rotation="varimax")
+```
+Without the rotations both datasets have seem to have pretty evenly distributed variables in both factors, after the rotation they are more unevenly distributed and have one variable with 0% of the loading. The factors of the two datasets are differently distributed and seem to focus on different variables.
+
+I choose a factor of 2 for these models because when I run factanal of 1 factor I get a p-value greater than 0.05 so a factor of 2 would also have a p-value greater than 0.05. Also when looking at how the variables are distributed over all of the factors they seem to include all variables (x1, x2, x3, x4). Finally the fits and r squareds are fairly high and adding a third factor doesn't increase them by much.
+
+The proportion of variance of the first factors is more than 40% and the second one is 40% for the Haltica Oleracea Data and 36% for the Haltica Carduorum so the cummalitve is about 80% for both. The proportion of variablility is very similar for these two data sets.
+
+# The Engineer Data and Pilot Data
+```{r}
+cor(engineer_data[1:20, 1:6])
+cor(engineer_data[21:40, 1:6])
+```
+The absolute correlation for the engineer data is fairly low with the highest being X2 and X5 with -0.43. The rest of the correlations are lower than 0.38 with a lot of them being less than 0.1. The absolute correlation for the pilot data is also fairly low with the highest being X1 and X6 with 0.47. The rest of the correlations are lower than 0.38 with a lot of them between 0.1 and 0.2. The two correlation matrices seem to be similarly distributed with a few exceptions.
+
+```{r}
+out1eng<-principal(as.matrix(engineer_data[1:20, 1:6]),nfactors=4,rotate="none")
+out2eng<-principal(as.matrix(engineer_data[1:20, 1:6]),nfactors=4,rotate="varimax")
+out1pilot<-principal(as.matrix(engineer_data[21:40, 1:6]),nfactors=4,rotate="none")
+out2pilot<-principal(as.matrix(engineer_data[21:40, 1:6]),nfactors=4,rotate="varimax")
+out1eng$loadings
+out2eng$loadings
+out1pilot$loadings
+out2pilot$loadings
+# factanal(as.matrix(engineer_data[1:20, 1:6]),3,rotation="varimax")
+# factanal(as.matrix(engineer_data[21:40, 1:6]),3,rotation="varimax")
+```
+Without the rotations the engineer data variables in the factors seem to be pretty evenly distributed, after the rotation they are more unevenly distributed and have 4, 3, 1, and 3 variable respectively with 0% of the loading. Without the rotation the pilot data does seem to be more unevenly distributed than the unrotated engineer data but after the rotation the first factor is more evenly distributed while the rest seem more unevenly distributed than the unrotated pilots data. The factors of the two datasets are differently distributed and seem to focus on different variables.
+
+I choose a factor of 4 for these models because when I run factanal of 3 factors I get a p-value less than but close to 0.05 and when I run them with 4 factors I get an error '4 factors are too many for 6 variables' but because of the p-values at 3 factors it seems that 4 would be enough. Also when looking at how the variables are distributed over all of the factors they seem to include all variables (X1, X2, X3, X4, X5, X6). Finally the fits and r squareds are fairly high and adding a fifth factor doesn't increase them by much.
+
+The proportion of variance of the first two factors is more than 20% and the second two are between 20-17% for both datasets and the cummalitves are both above 80% which indicates 4 factors is a good choice. The proportion of variablility is very similar for these two data sets.

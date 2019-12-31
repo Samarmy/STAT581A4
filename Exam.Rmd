@@ -1,0 +1,120 @@
+---
+title: "STAT-581A4 Take Home Exam"
+author: "Sam Armstrong"
+date: "11/14/2019"
+output: pdf_document
+---
+I understand and have followed the rules on the take home exam document and have not used any unauthorized references. 
+
+```{r}
+library(car,warn.conflicts=FALSE,quietly=TRUE)
+library(ggplot2,warn.conflicts=FALSE,quietly=TRUE)
+library(ggbiplot,warn.conflicts=FALSE,quietly=TRUE)
+library(nortest)
+library(heplots)
+library(psych)
+data(iris)
+```
+
+1. 
+```{r}
+pairs(iris[1:4], col = c("blue", "green", "red")[iris$Species])
+pairs(iris[iris[, 5] == 'setosa', 1:4])
+pairs(iris[iris[, 5] == 'versicolor', 1:4])
+pairs(iris[iris[, 5] == 'virginica', 1:4])
+```
+
+Looking at the individual species pairs plots there does appear to be a positive correlation between the variables (Sepal.Length, Sepal.Width, Petal.Length, Petal.Width). Looking at the full dataset pairs plots most of the plots show the species to be grouped/distributed differently, although in a couple of them the versicolor and virginica are similar (e.g. Sepal.Length by Sepal.Width). In the full data plots there does also appear to be a positive correlation.
+
+```{r}
+sampleMean <- apply(iris[1:4], 2, mean);round(sampleMean, 3)
+setosaSampleMean <- apply(iris[iris[, 5] == 'setosa', 1:4], 2, mean);round(setosaSampleMean, 3)
+versicolorSampleMean <- apply(iris[iris[, 5] == 'versicolor', 1:4], 2, mean);round(versicolorSampleMean, 3)
+virginicaSampleMean <- apply(iris[iris[, 5] == 'virginica', 1:4], 2, mean);round(virginicaSampleMean, 3)
+```
+
+In the sample means (above) there could be a possibly significant difference. Looking at the Petal.Length the setosa's Petal.Length is ~1.5 and the versicolor is ~4.2 and the virginica is ~5.5 which seems pretty significant. The Petal.Width means also seems fairly different while the Sepal variables could go either way.
+
+```{r}
+S <- cov(iris[1:4]);round(S, 3)
+S2 <- cor(iris[1:4]);round(S2, 3)
+setosaS <- cor(iris[iris[, 5] == 'setosa', 1:4]);round(setosaS, 3)
+versicolorS <- cor(iris[iris[, 5] == 'versicolor', 1:4]);round(versicolorS, 3)
+virginicaS <- cor(iris[iris[, 5] == 'virginica', 1:4]);round(virginicaS, 3)
+cortest.mat(cor(iris[iris[, 5] == 'setosa', 1:4]), cor(iris[iris[, 5] == 'versicolor', 1:4])) 
+cortest.mat(cor(iris[iris[, 5] == 'setosa', 1:4]), cor(iris[iris[, 5] == 'virginica', 1:4]))
+cortest.mat(cor(iris[iris[, 5] == 'virginica', 1:4]), cor(iris[iris[, 5] == 'versicolor', 1:4])) 
+```
+
+Examining the sample covariance matrices the full dataset's is ditributed unevenly suggesting a correlation matrix should be used. After standardizing the correlation matrix the full data shows 3 strong absolute correlations (greater than 0.8) and 3 week absolute correlations (greater than 0.1 and less than 0.5). Because of the possible significant difference of the mean vectors for the individual species we'll standardize by using use the correlation matrix. Clearly the individual species pairwise correlations are different between setosa and the other two and the pairwise correlations between versicolor and virginica could also be significantly different. Using the cortest functio to see if the correlations matrices are significantly different all three comparisons returned a P-value less than 0.01 indicating a significant difference between correlations for all three species.
+
+Based on the analysis above there are strong indications that there are significant differences between the 3 individual species datasets.
+
+2.
+```{r}
+manovaOut = manova(as.matrix(iris[1:4])~as.factor(iris[, 5]));manovaOut
+summary(manovaOut)
+```
+
+2.A) The p-value is less than 0.01 so we reject the null hypothesis and conclude that there is a significant difference in the mean vectors of the three species.
+
+```{r}
+pearson.test(as.matrix(iris[1:4]))
+library(heplots,quietly = T)
+res = boxM(as.matrix(iris[1:4]),as.matrix(iris[, 5]))
+boxplot(iris[1:4])
+summary(res)
+```
+
+2.B) No the variables do not meet the normality assumption. The p-value for the pearsons chi-square normality test and Box's M-test of Equality of Covariance Matrices were both less than 0.01 suggesting that the distribution of the sample means and covariance matrices are not normal. Also looking at the boxplot the four variables do not seem to be distributed/scaled the same.
+
+```{r}
+pairwiseOut1<-manova(as.matrix(iris[,1:4])~as.factor(iris[,5]),subset=as.factor(iris[,5])%in%c("setosa","versicolor"));summary(pairwiseOut1)
+pairwiseOut2<-manova(as.matrix(iris[,1:4])~as.factor(iris[,5]),subset=as.factor(iris[,5])%in%c("setosa","virginica"));summary(pairwiseOut2)
+pairwiseOut3<-manova(as.matrix(iris[,1:4])~as.factor(iris[,5]),subset=as.factor(iris[,5])%in%c("virginica","versicolor"));summary(pairwiseOut3)
+```
+
+2.C) Yes the pairwise differences between each of the species are significant (the p-value for all three comparisons was less than 0.01).
+
+
+3. 
+```{r}
+round(cumsum(eigen(cor(iris[,1:4]))$values/sum(eigen(cor(iris[,1:4]))$values)), 2)
+round(cumsum(eigen(cor(iris[iris[, 5] == 'setosa', 1:4]))$values/sum(eigen(cor(iris[iris[, 5] == 'setosa', 1:4]))$values)), 2)
+round(cumsum(eigen(cor(iris[iris[, 5] == 'versicolor', 1:4]))$values/sum(eigen(cor(iris[iris[, 5] == 'versicolor', 1:4]))$values)), 2)
+round(cumsum(eigen(cor(iris[iris[, 5] == 'virginica', 1:4]))$values/sum(eigen(cor(iris[iris[, 5] == 'virginica', 1:4]))$values)), 2)
+plot(eigen(cor(iris[,1:4]))$values,type='b')
+lines(eigen(cor(iris[iris[, 5] == 'setosa', 1:4]))$values,type='b', col="blue")
+lines(eigen(cor(iris[iris[, 5] == 'versicolor', 1:4]))$values,type='b', col="green")
+lines(eigen(cor(iris[iris[, 5] == 'virginica', 1:4]))$values,type='b', col="red")
+```
+
+3.A) I decided on retaining 2 principal components for each of the scenarios because the cumulative eigenvalue percentage of the variance (above) is close to or over 80% and looking at each of the plots the elbow seems to occur at the 2nd PC. 
+
+3.B) I used the correlation matrix because the lengths and widths of the sepals and petals seem to be scaled differently.
+
+```{r}
+iris.pc=princomp(iris[,1:4],cor=TRUE)
+setosa.pc=princomp(iris[iris[, 5] == 'setosa', 1:4],cor=TRUE)
+versicolor.pc=princomp(iris[iris[, 5] == 'versicolor', 1:4],cor=TRUE)
+virginica.pc=princomp(iris[iris[, 5] == 'virginica', 1:4],cor=TRUE)
+summary(iris.pc,loading=T)
+summary(setosa.pc,loading=T)
+summary(versicolor.pc,loading=T)
+summary(virginica.pc,loading=T)
+```
+3.C) There does appear to be differences between the PCs of the three different species. One difference is the variable composition in the loadings of the PCs. The variables in the first PC from highest to lowest percentage for setosa, versicolor, and virginica respectively are (Sepal.Length, Sepal.Width, Petal.Width, Petal.Length), (Petal.Length, Petal.Width, Sepal.Length, Sepal.Width), and (Sepal.Length, Petal.Length, Sepal.Width, Petal.Width) which are all different. This is also true for the second PC. Another difference is the proportion of variance which has at least a 10% difference between the species for the first PC. The second PC is similar except for the setosa and the virginica which are both about 25%. 
+
+```{r}
+ggbiplot(iris.pc ,groups=iris[, 5]) + scale_color_manual(values=c("blue", "green", "red"))
+ggbiplot(setosa.pc)
+ggbiplot(versicolor.pc)
+ggbiplot(virginica.pc)
+```
+
+3.D) The points in the biplots seem to have a similar distribution. The ranges of the PCs in the biplots are also similar at about (-2, 2) for both. Looking at the arrows you can see that increasing PC1 increases all the variables at similar rates. However this is not the true for the PC2 of setosa which increases the sepal variables and decreases the petal variables and the PC2 of versicolor and virginica which both increase the lengths and decrease the widths.
+
+3.E) The first two PCs of the full dataset and of the individual species seem quite different. The points for each species in the full dataset plots seem to be distributed differently and all together look like they are distributed differently than the other individual species plots which look evenly distributed. The range of the PC2 for the full data plot is also larger than the individual species plots at about (-3, 3). Finally the first PC in the full data has one negative effect on the Sepal.Width (the individual species plots are all positive). The second PC of the full data has a positive effect on the sepal variables (different from the negative effect of sepal.width for the versicolor and virginica PC2s) and no effect on the petal variables (which is different from all the individual species which have a positive or negative effect).
+
+4. 
+Based on the results from problems 1-3 there is a significant difference between the  setosa, versicolor, and virginica datasets. The four variables Sepal.Length, Sepal.Width, Petal.Length, and Petal.Width also appear to be scaled differently so the data needs to be standardized. Even after standardizing there is a significant difference between the correlation matrices of the three species. Because there appears to be a correlation in the individual species data using PCA seems like a good option. Using principal component analysis on the individual species resulted in PCs that were quite different, but appeared to represent the individual species data well with only two PCs. Using the full dataset in a PCA also appeared to represent the data well, but the plot produced by plotting the first two PCs showed different distributions for the individual species suggesting that there were problems with using all three species in one PCA. The final take away from analyzing the iris dataset is that the three different species are significantly different and should be analyzed separately, but each can be represented well with only two PCs.
